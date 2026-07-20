@@ -129,3 +129,93 @@ logistic_regression.fit(x_train, y_train)
 
 
 #---------------------------6. MODEL EVALUATION -----------------
+def evaluate(model, x_test, y_test, model_name):
+    predictions = model.predict(x_test)
+    probabilities = model.predict_proba(x_test)[:, 1]
+    metrics = {
+        "accuracy": accuracy_score(y_test, predictions),
+        "precision": precision_score(y_test, predictions),
+        "recall": recall_score(y_test, predictions),
+        "f1_score": f1_score(y_test, predictions),
+        "roc_auc": roc_auc_score(y_test, probabilities),
+    }
+    print(f"Metrics for {model_name}:")
+    for k, v in metrics.items():
+        print(f"{k}: {v:.3f}")
+    print(classification_report(y_test, predictions, target_names=["Rejected", "Approved"]))
+    return metrics, predictions, probabilities
+
+rf_metrics, rf_predictions, rf_probabilities = evaluate(random_forest, x_test, y_test, "Random Forest")
+lr_metrics, lr_predictions, lr_probabilities = evaluate(logistic_regression, x_test, y_test, "Logistic Regression")
+
+log["rf_metrics"] = rf_metrics
+log["lr_metrics"] = lr_metrics
+
+
+#---------------------------7. FIGURES FOR THE REPORT -----------------
+
+#7.1 class balance 
+plt.figure(figsize = (5,4))
+y.value_counts().rename({0:"Rejected", 1:"Approved"}).plot(kind="bar", color=["#2ce679","#ee4836"])
+plt.title("class balance of Approved Outcomes")
+plt.ylabel("Number of Applications")
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.savefig(f"{OUT_DIR}/class_balance.png", dpi=150)
+plt.close()
+
+#7.2 confusion matrices
+fig, axes = plt.subplots(1,2, figsize=(10,4))
+for ax, predictions, model_name in zip(axes, [rf_predictions, lr_predictions],["Random Forest", "Logistic Regression"]):
+    cm = confusion_matrix(y_test, predictions)
+    sns.heatmap(cm, annot = True, fmt="d", cmap="Blues", ax=ax, xticklabels= ["Rejected", "Approved"], yticklabels=["Rejected", "Approved"])
+    ax.set_title(model_name)
+    ax.set_xlabel("predicted")
+    ax.set_ylabel("Actual")
+plt.tight_layout()
+plt.savefig(f"{OUT_DIR}/confusion_matrices.png", dpi=150)
+plt.close()
+
+#7.3 ROC Curves
+plt.figure(figsize=(5.5, 5))
+for probabilities, model_name in [(rf_probabilities, "Random Forest"), (lr_probabilities, "Logistic Regression")]:
+    fpr, tpr, _ = roc_curve(y_test, probabilities)
+    auc = roc_auc_score(y_test, probabilities)
+    plt.plot(fpr, tpr, label = f"{model_name} (AUC = {auc:.3f})")
+plt.plot([0,1],[0,1], "k--", label = "Random classifier")
+plt.xlabel("False positive rate")
+plt.ylabel("True positive rate")
+plt.title("ROC Curve Comparision")
+plt.legend()
+plt.tight_layout()
+plt.savefig(f"{OUT_DIR}/roc_curves.png", dpi=150)
+plt.close()
+
+#7.4 Random Forest feature importance
+importances = pd.Series(random_forest.feature_importances_, index=feature_cols).sort_values()
+plt.figure(figsize=(6,4))
+importances.plot(kind="barh", color="#2980b9")
+plt.title("Random Forest Feature Importance")
+plt.xlabel("Importance")
+plt.tight_layout()
+plt.savefig(f"{OUT_DIR}/rf_feature_importance.png", dpi=150)
+plt.close()
+log["rf_feature_importance"] = importances.to_dict()
+
+#7.5 Metric Comparison bar chart 
+metrics_df = pd.DataFrame({"Random Forest": rf_metrics, "Logistic Regression": lr_metrics}).drop("roc_auc")
+plt.figure(figsize=(6,4))
+metrics_df.plot(kind="bar", ax=plt.gca(), color=["#2980b9","#27ae60"])
+plt.title("Model Metrics Comparison on Test set")
+plt.ylabel("Score")
+plt.ylim(0,1)
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.savefig(f"{OUT_DIR}/model_metrics_comparison.png", dpi=150)
+plt.close()
+
+#--------------------------------RESULTS LOG-------------------
+with open(f"{OUT_DIR}/ run_log.json","w") as f:
+    json.dump(log, f, indent= 2, default=str)
+
+print("\nAll figures and run_log.json saved to outputs/")

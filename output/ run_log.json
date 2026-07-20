@@ -1,0 +1,45 @@
+{
+  "raw-rows": 13731,
+  "fully_blank_rows_removed": 231,
+  "sentinel_rows_removed": 397,
+  "duplicate_id_rows_removed": 603,
+  "missing_income_after_cleaning": 0,
+  "missing_age_after_cleaning": 0,
+  "gender_value_counts": {
+    "a": 6276,
+    "b": 6223,
+    "c": 1
+  },
+  "rows_after_cleaning": 12500,
+  "duplicate_full_rows_remaining": 0,
+  "feature_columns": [
+    "Age",
+    "Income",
+    "Outgoings",
+    "Outgoings_to_Income"
+  ],
+  "class_balance": {
+    "1": 0.58392,
+    "0": 0.41608
+  },
+  "rf_metrics": {
+    "accuracy": 0.6308,
+    "precision": 0.778816199376947,
+    "recall": 0.5136986301369864,
+    "f1_score": 0.6190672719768882,
+    "roc_auc": 0.7269029899894626
+  },
+  "lr_metrics": {
+    "accuracy": 0.638,
+    "precision": 0.6958362738179252,
+    "recall": 0.6753424657534246,
+    "f1_score": 0.6854362182829337,
+    "roc_auc": 0.7078536617492097
+  },
+  "rf_feature_importance": {
+    "Age": 0.07807182400828407,
+    "Outgoings": 0.07910991823244903,
+    "Outgoings_to_Income": 0.29494603617555826,
+    "Income": 0.5478722215837085
+  }
+}
